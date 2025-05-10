@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Samaritan - Hospital Register</title>
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <script src="//unpkg.com/navigo"></script>
+    <script src="https://kit.fontawesome.com/244af82459.js" crossorigin="anonymous"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+     integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
+     crossorigin=""/>
+</head>
+<body>
+
+    <main class="app">
+        <!-- Alpine feed into main div from hospitaRegister.js-->
+    </main>
+
+    
+</body>
+
+<script src="hospitalRegister.js"></script>
+<!-- Firebase config -->
+<script type="module">
+    // Import the functions you need from the SDKs you need
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.7.1/firebase-app.js";
+    // TODO: Add SDKs for Firebase products that you want to use
+    // https://firebase.google.com/docs/web/setup#available-libraries
+  
+    // Your web app's Firebase configuration
+    const firebaseConfig = {
+      apiKey: "AIzaSyAcSUTUj2aGDvOUwlC5o0isC3MdhfW47QA",
+      authDomain: "samaritanwebapp.firebaseapp.com",
+      projectId: "samaritanwebapp",
+      storageBucket: "samaritanwebapp.firebasestorage.app",
+      messagingSenderId: "78749979053",
+      appId: "1:78749979053:web:a7487d289ad65d53eed124"
+    };
+  
+    // Initialize Firebase
+    const app = initializeApp(firebaseConfig);
+  </script>
+</html>
