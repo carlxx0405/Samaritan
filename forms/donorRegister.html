@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Blood Donor</title>
+  <link rel="icon" href="/assets/icon.png" type="image/x-icon" />
+  
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-firestore-compat.js"></script>
+</head>
+<body class="bg-gray-100 min-h-screen flex items-center justify-center p-4">
+  <div x-data="registerLogin()" class="bg-white rounded-lg shadow-md w-full max-w-md p-6">
+
+    <!-- Toggle Buttons -->
+    <div class="flex justify-between mb-4">
+      <button @click="mode = 'register'" :class="mode === 'register' ? 'text-red-600 font-bold' : ''">Register</button>
+      <button @click="mode = 'login'" :class="mode === 'login' ? 'text-red-600 font-bold' : ''">Login</button>
+    </div>
+
+    <!-- Registration Form -->
+    <form x-show="mode === 'register'" @submit.prevent="submitRegister" class="space-y-4">
+      <h1 class="text-2xl font-bold text-center text-red-600">Become a Blood Donor</h1>
+
+      <input x-model="firstName" type="text" placeholder="First Name" required class="w-full px-4 py-2 border rounded-lg"/>
+      <input x-model="surname" type="text" placeholder="Surname" required class="w-full px-4 py-2 border rounded-lg"/>
+      <input x-model="age" type="number" placeholder="Age (16-65)" min="16" max="65" required class="w-full px-4 py-2 border rounded-lg"/>
+      <p x-show="ageError" class="text-sm text-red-600">Age must be between 16 and 65.</p>
+
+      <input x-model="email" type="email" placeholder="Email" required class="w-full px-4 py-2 border rounded-lg"/>
+      <input x-model="password" type="password" placeholder="Password" required class="w-full px-4 py-2 border rounded-lg"/>
+
+      <select x-model="bloodGroup" required class="w-full px-4 py-2 border rounded-lg">
+        <option value="" disabled selected>Select your blood group</option>
+        <option>A+</option><option>A-</option><option>B+</option><option>B-</option>
+        <option>AB+</option><option>AB-</option><option>O+</option><option>O-</option>
+      </select>
+
+      <div class="flex space-x-2">
+        <input x-model="location" type="text" placeholder="Enter Manual Location" class="flex-1 px-4 py-2 border rounded-lg"/>
+        <button type="button" @click="detectLocation" class="bg-blue-500 text-white px-3 rounded-lg">Detect</button>
+      </div>
+      <p x-show="locationError" class="text-sm text-red-600">Allow location access or enter manually.</p>
+
+      <button type="submit" class="w-full bg-red-600 text-white py-2 rounded-lg hover:bg-red-700" :disabled="isLoading">
+        <span x-show="!isLoading">Register</span>
+        <span x-show="isLoading">Saving...</span>
+      </button>
+    </form>
+
+    <!-- Login Form -->
+    <form x-show="mode === 'login'" @submit.prevent="submitLogin" class="space-y-4">
+      <h1 class="text-2xl font-bold text-center text-red-600">Login</h1>
+
+      <input x-model="email" type="email" placeholder="Email" required class="w-full px-4 py-2 border rounded-lg"/>
+      <input x-model="password" type="password" placeholder="Password" required class="w-full px-4 py-2 border rounded-lg"/>
+
+      <button type="submit" class="w-full bg-red-600 text-white py-2 rounded-lg hover:bg-red-700" :disabled="isLoading">
+        <span x-show="!isLoading">Login</span>
+        <span x-show="isLoading">Logging in...</span>
+      </button>
+    </form>
+
+    <!-- Feedback Message -->
+    <div x-show="message" x-text="message" class="mt-4 text-center" :class="isSuccess ? 'text-green-600' : 'text-red-600'"></div>
+  </div>
+
+  <script>
+    // Firebase Config
+    const firebaseConfig = {
+      apiKey: "AIzaSyBIMvMk7TVVTZaG54rNEzPBoJt3lte9Cgw",
+      authDomain: "samaritanweb-a5575.firebaseapp.com",
+      projectId: "samaritanweb-a5575",
+      storageBucket: "samaritanweb-a5575.appspot.com",
+      messagingSenderId: "813580297276",
+      appId: "1:813580297276:web:d58d6637cfc101ee484f39"
+    };
+  
+    firebase.initializeApp(firebaseConfig);
+    const auth = firebase.auth();
+    const db = firebase.firestore();
+  
+    function registerLogin() {
+      return {
+        mode: 'register',
+        firstName: '',
+        surname: '',
+        age: '',
+        email: '',
+        password: '',
+        bloodGroup: '',
+        location: '',
+        isLoading: false,
+        message: '',
+        isSuccess: false,
+        ageError: false,
+        locationError: false,
+  
+        detectLocation() {
+          if (navigator.geolocation) {
+            navigator.geolocation.getCurrentPosition(
+              (pos) => {
+                this.location = `Lat: ${pos.coords.latitude}, Long: ${pos.coords.longitude}`;
+                this.locationError = false;
+              },
+              () => {
+                this.locationError = true;
+                this.message = "Location access denied.";
+              }
+            );
+          } else {
+            this.locationError = true;
+            this.message = "Geolocation not supported.";
+          }
+        },
+  
+        validateAge() {
+          this.ageError = this.age < 16 || this.age > 65;
+          return !this.ageError;
+        },
+  
+        async submitRegister() {
+          if (!this.validateAge()) return;
+          this.isLoading = true;
+          this.message = '';
+  
+          try {
+            const userCredential = await auth.createUserWithEmailAndPassword(this.email, this.password);
+            const user = userCredential.user;
+  
+            await db.collection("donors").doc(user.uid).set({
+              firstName: this.firstName,
+              surname: this.surname,
+              age: Number(this.age),
+              email: this.email,
+              bloodGroup: this.bloodGroup,
+              location: this.location,
+              role: 'user', // default role
+              createdAt: firebase.firestore.FieldValue.serverTimestamp()
+            });
+  
+            this.isSuccess = true;
+            this.message = "Registration successful!";
+            window.location.href = "donor-dashboard.html";
+  
+          } catch (error) {
+            this.isSuccess = false;
+            this.message = error.message;
+          } finally {
+            this.isLoading = false;
+          }
+        },
+  
+        async submitLogin() {
+          this.isLoading = true;
+          this.message = '';
+  
+          try {
+            const userCredential = await auth.signInWithEmailAndPassword(this.email, this.password);
+            const user = userCredential.user;
+  
+            const userDoc = await db.collection("donors").doc(user.uid).get();
+            if (userDoc.exists) {
+              const role = userDoc.data().role || 'user';
+  
+              this.isSuccess = true;
+              this.message = "Login successful! Redirecting...";
+  
+              if (role === 'admin') {
+                window.location.href = "../admin/adminDashboard.html";
+              } else {
+                window.location.href = "../donor/donorDashboard.html";
+              }
+            } else {
+              this.message = "No user data found.";
+              this.isSuccess = false;
+            }
+          } catch (error) {
+            this.isSuccess = false;
+            this.message = error.message;
+          } finally {
+            this.isLoading = false;
+          }
+        }
+      }
+    }
+  </script>  
+</body>
+</html>
