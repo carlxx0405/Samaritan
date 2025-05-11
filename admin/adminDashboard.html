@@ -1,32 +1,48 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" class="bg-gray-50">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Admin Dashboard</title>
-    <link rel="icon" href="../assets/icon.png" type="image/x-icon">
-    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
-    <script src="//unpkg.com/navigo"></script>
-    <script src="https://kit.fontawesome.com/244af82459.js" crossorigin="anonymous"></script>
-    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Admin Dashboard</title>
+  <link rel="icon" href="../assets/icon.png" type="image/x-icon">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+  <script src="https://kit.fontawesome.com/244af82459.js" crossorigin="anonymous"></script>
+
+  <!-- Firebase SDKs -->
+  <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore-compat.js"></script>
+
+  <script>
+    // Firebase config
+    const firebaseConfig = {
+      apiKey: "AIzaSyBIMvMk7TVVTZaG54rNEzPBoJt3lte9Cgw",
+      authDomain: "samaritanweb-a5575.firebaseapp.com",
+      projectId: "samaritanweb-a5575",
+      storageBucket: "samaritanweb-a5575.firebasestorage.app",
+      messagingSenderId: "813580297276",
+      appId: "1:813580297276:web:d58d6637cfc101ee484f39"
+    };
+
+    // Initialize Firebase
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
+  </script>
 </head>
-<body class="bg-gray-50" x-data="adminDashboard()">
+<body x-data="adminDashboard()" x-init="init()">
   <div class="flex min-h-screen">
     <!-- Sidebar -->
     <aside class="w-60 bg-white shadow-md p-4 space-y-6">
       <div class="text-xl font-bold text-red-600">Samaritan <i class="fas fa-tint"></i></div>
       <nav class="flex flex-col space-y-3">
-        <button @click="currentTab = 'dashboard'" class="text-left nav-link text-gray-700 hover:text-red-600 flex items-center space-x-2" :class="{'text-red-600': currentTab === 'dashboard'}">
+        <button @click="currentTab = 'dashboard'" :class="{'text-red-600': currentTab === 'dashboard'}" class="text-left nav-link flex items-center space-x-2 text-gray-700 hover:text-red-600">
           <i class="fas fa-home"></i><span>Dashboard</span>
         </button>
-        <button @click="currentTab = 'requests'" class="text-left nav-link text-gray-700 hover:text-red-600 flex items-center space-x-2" :class="{'text-red-600': currentTab === 'requests'}">
+        <button @click="currentTab = 'requests'" :class="{'text-red-600': currentTab === 'requests'}" class="text-left nav-link flex items-center space-x-2 text-gray-700 hover:text-red-600">
           <i class="fas fa-tint"></i><span>Blood Requests</span>
         </button>
-        <button @click="currentTab = 'inventory'" class="text-left nav-link text-gray-700 hover:text-red-600 flex items-center space-x-2" :class="{'text-red-600': currentTab === 'inventory'}">
+        <button @click="currentTab = 'inventory'" :class="{'text-red-600': currentTab === 'inventory'}" class="text-left nav-link flex items-center space-x-2 text-gray-700 hover:text-red-600">
           <i class="fas fa-warehouse"></i><span>Inventory</span>
-        </button>
-        <button @click="currentTab = 'reports'" class="text-left nav-link text-gray-700 hover:text-red-600 flex items-center space-x-2" :class="{'text-red-600': currentTab === 'reports'}">
-          <i class="fas fa-chart-bar"></i><span>Reports</span>
         </button>
       </nav>
     </aside>
@@ -46,13 +62,13 @@
             <p class="text-3xl font-bold" x-text="stats.availableDonors"></p>
           </div>
           <div class="bg-white p-4 rounded-lg shadow">
-            <h3 class="text-gray-500">Critical Stock</h3>
-            <p class="text-3xl font-bold" x-text="stats.criticalStock"></p>
+            <h3 class="text-gray-500">Total Blood Units</h3>
+            <p class="text-3xl font-bold" x-text="stats.totalUnits"></p>
           </div>
         </div>
       </div>
 
-      <!-- Blood Requests Tab -->
+      <!-- Requests Tab -->
       <div x-show="currentTab === 'requests'" class="space-y-6">
         <h2 class="text-2xl font-bold text-gray-800">Blood Requests</h2>
         <div class="bg-white rounded-lg shadow overflow-x-auto">
@@ -73,24 +89,24 @@
                   <td class="px-4 py-2" x-text="request.bloodType"></td>
                   <td class="px-4 py-2" x-text="request.units"></td>
                   <td class="px-4 py-2">
-                    <span x-text="request.status" 
-                      :class="{
-                        'bg-yellow-100 text-yellow-800': request.status === 'Pending',
-                        'bg-green-100 text-green-800': request.status === 'Approved',
-                        'bg-red-100 text-red-800': request.status === 'Rejected'
-                      }" 
-                      class="px-2 py-1 rounded-full text-xs">
+                    <span x-text="request.status"
+                          :class="{
+                            'bg-yellow-100 text-yellow-800': request.status === 'pending',
+                            'bg-green-100 text-green-800': request.status === 'approved',
+                            'bg-red-100 text-red-800': request.status === 'rejected'
+                          }"
+                          class="px-2 py-1 rounded-full text-xs">
                     </span>
                   </td>
                   <td class="px-4 py-2">
-                    <button @click="approveRequest(request.id)" 
+                    <button @click="approveRequest(request.id)"
                             class="bg-green-500 text-white px-3 py-1 rounded hover:bg-green-600"
-                            x-show="request.status === 'Pending'">
+                            x-show="request.status === 'pending'">
                       Approve
                     </button>
-                    <button @click="rejectRequest(request.id)" 
+                    <button @click="rejectRequest(request.id)"
                             class="bg-red-500 text-white px-3 py-1 rounded hover:bg-red-600 ml-2"
-                            x-show="request.status === 'Pending'">
+                            x-show="request.status === 'pending'">
                       Reject
                     </button>
                   </td>
@@ -102,165 +118,119 @@
       </div>
 
       <!-- Inventory Tab -->
-      <div x-show="currentTab === 'inventory'" class="space-y-6">
-        <h2 class="text-2xl font-bold text-gray-800">Blood Inventory</h2>
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div class="bg-white p-6 rounded-lg shadow">
-            <h3 class="text-lg font-semibold mb-4">Current Stock Levels</h3>
-            <div class="space-y-4">
-              <template x-for="(stock, bloodType) in inventory" :key="bloodType">
-                <div>
-                  <div class="flex justify-between mb-1">
-                    <span class="font-medium" x-text="bloodType"></span>
-                    <span x-text="stock + ' units'" 
-                          :class="{
-                            'text-red-600': stock < 5,
-                            'text-yellow-600': stock >= 5 && stock < 10,
-                            'text-green-600': stock >= 10
-                          }"></span>
-                  </div>
-                  <div class="w-full bg-gray-200 rounded-full h-2.5">
-                    <div :class="{
-                          'bg-red-600': stock < 5,
-                          'bg-yellow-600': stock >= 5 && stock < 10,
-                          'bg-green-600': stock >= 10
-                        }" 
-                        :style="'width: ' + (stock * 10) + '%'" 
-                        class="h-2.5 rounded-full"></div>
-                  </div>
-                </div>
-              </template>
-            </div>
-          </div>
-          
-          <div class="bg-white p-6 rounded-lg shadow">
-            <h3 class="text-lg font-semibold mb-4">Update Inventory</h3>
-            <form @submit.prevent="updateInventory" class="space-y-4">
-              <div>
-                <label class="block text-gray-700 mb-2">Blood Type</label>
-                <select x-model="inventoryUpdate.bloodType" class="w-full px-4 py-2 border rounded-lg">
-                  <option value="" disabled selected>Select blood type</option>
-                  <option value="A+">A+</option>
-                  <option value="A-">A-</option>
-                  <option value="B+">B+</option>
-                  <option value="B-">B-</option>
-                  <option value="AB+">AB+</option>
-                  <option value="AB-">AB-</option>
-                  <option value="O+">O+</option>
-                  <option value="O-">O-</option>
+      <!-- Inventory Tab -->
+        <div x-show="currentTab === 'inventory'" class="space-y-6">
+            <h2 class="text-2xl font-bold text-gray-800">Blood Inventory</h2>
+        
+            <div class="bg-white p-6 rounded-lg shadow max-w-md space-y-4">
+            <div>
+                <label class="block mb-1 font-semibold">Select Blood Type</label>
+                <select x-model="selectedType" class="border px-3 py-2 w-full rounded">
+                <template x-for="type in Object.keys(inventory)" :key="type">
+                    <option x-text="type" :value="type"></option>
+                </template>
                 </select>
-              </div>
-              <div>
-                <label class="block text-gray-700 mb-2">Units</label>
-                <input x-model.number="inventoryUpdate.units" type="number" min="0" class="w-full px-4 py-2 border rounded-lg">
-              </div>
-              <button type="submit" class="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600">
-                Update Stock
-              </button>
-            </form>
-          </div>
-        </div>
-      </div>
-
-      <!-- Reports Tab -->
-      <div x-show="currentTab === 'reports'" class="space-y-6">
-        <h2 class="text-2xl font-bold text-gray-800">Reports</h2>
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div class="bg-white p-6 rounded-lg shadow">
-            <h3 class="text-lg font-semibold mb-4">Monthly Donations</h3>
-            <div class="h-64 bg-gray-100 flex items-center justify-center rounded-lg">
-              <p class="text-gray-500">Monthly donations chart will appear here</p>
             </div>
-          </div>
-          <div class="bg-white p-6 rounded-lg shadow">
-            <h3 class="text-lg font-semibold mb-4">Request Status</h3>
-            <div class="h-64 bg-gray-100 flex items-center justify-center rounded-lg">
-              <p class="text-gray-500">Request status chart will appear here</p>
+        
+            <div>
+                <label class="block mb-1 font-semibold">Current Units: <span x-text="inventory[selectedType]"></span></label>
+                <input min="0" type="number" x-model="newUnits" placeholder="Enter new unit value" class="border px-3 py-2 w-full rounded" />
             </div>
-          </div>
+        
+            <button @click="updateInventory()" class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">
+                Update Units
+            </button>
+            </div>
         </div>
+  
       </div>
     </main>
   </div>
 
+  <!-- Alpine Data -->
   <script>
-    // Firebase Configuration
-    const firebaseConfig = {
-      apiKey: "AIzaSyBIMvMk7TVVTZaG54rNEzPBoJt3lte9Cgw",
-      authDomain: "samaritanweb-a5575.firebaseapp.com",
-      projectId: "samaritanweb-a5575",
-      storageBucket: "samaritanweb-a5575.firebasestorage.app",
-      messagingSenderId: "813580297276",
-      appId: "1:813580297276:web:d58d6637cfc101ee484f39"
-    };
-
-    // Initialize Firebase
-    firebase.initializeApp(firebaseConfig);
-    const db = firebase.firestore();
-
     function adminDashboard() {
       return {
         currentTab: 'dashboard',
         stats: {
-          pendingRequests: 8,
-          availableDonors: 42,
-          criticalStock: 3
+          pendingRequests: 0,
+          availableDonors: 0,
+          totalUnits: 0
         },
-        bloodRequests: [
-          { id: 'REQ-001', bloodType: 'O+', units: 2, status: 'Pending' },
-          { id: 'REQ-002', bloodType: 'A-', units: 1, status: 'Pending' },
-          { id: 'REQ-003', bloodType: 'B+', units: 3, status: 'Approved' },
-          { id: 'REQ-004', bloodType: 'AB+', units: 1, status: 'Rejected' }
-        ],
+        bloodRequests: [],
         inventory: {
-          'A+': 12,
-          'A-': 4,
-          'B+': 8,
-          'B-': 3,
-          'AB+': 2,
-          'AB-': 1,
-          'O+': 15,
-          'O-': 5
+        'A+': 0,
+        'A-': 0,
+        'B+': 0,
+        'B-': 0,
+        'AB+': 0,
+        'AB-': 0,
+        'O+': 0,
+        'O-': 0
         },
-        inventoryUpdate: {
-          bloodType: '',
-          units: 0
+        selectedType: 'A+',
+        newUnits: '',
+
+
+        init() {
+          this.fetchStats();
+          this.loadRequests();
+          this.loadInventory();
         },
 
-        // Approve blood request
-        approveRequest(requestId) {
-          const request = this.bloodRequests.find(req => req.id === requestId);
-          if (request) {
-            request.status = 'Approved';
-            // In a real app, you would update Firestore here
-            alert(`Request ${requestId} approved and donors notified`);
-          }
+        fetchStats() {
+          db.collection('requests').where("status", "==", "pending").get().then(snap => {
+            this.stats.pendingRequests = snap.size;
+          });
+
+          db.collection('donors').get().then(snap => {
+            this.stats.availableDonors = snap.size;
+          });
+
+          db.collection('inventory').get().then(snap => {
+            let total = 0;
+            snap.forEach(doc => total += doc.data().units || 0);
+            this.stats.totalUnits = total;
+          });
         },
 
-        // Reject blood request
-        rejectRequest(requestId) {
-          const request = this.bloodRequests.find(req => req.id === requestId);
-          if (request) {
-            request.status = 'Rejected';
-            // In a real app, you would update Firestore here
-            alert(`Request ${requestId} rejected`);
-          }
+        loadRequests() {
+          db.collection('requests').onSnapshot(snapshot => {
+            this.bloodRequests = [];
+            snapshot.forEach(doc => {
+              this.bloodRequests.push({ id: doc.id, ...doc.data() });
+            });
+          });
         },
 
-        // Update inventory
+        approveRequest(id) {
+          db.collection('requests').doc(id).update({ status: 'approved' });
+        },
+
+        rejectRequest(id) {
+          db.collection('requests').doc(id).update({ status: 'rejected' });
+        },
+
+        loadInventory() {
+        db.collection('inventory').get().then(snapshot => {
+            snapshot.forEach(doc => {
+            this.inventory[doc.id] = doc.data().units;
+            });
+        });
+        },
+
+
         updateInventory() {
-          if (this.inventoryUpdate.bloodType && this.inventoryUpdate.units >= 0) {
-            this.inventory[this.inventoryUpdate.bloodType] = this.inventoryUpdate.units;
-            this.inventoryUpdate = { bloodType: '', units: 0 };
-            alert('Inventory updated successfully!');
-            
-            // Update critical stock count
-            this.stats.criticalStock = Object.values(this.inventory)
-              .filter(units => units < 5)
-              .length;
-          }
+        const amount = parseInt(this.newUnits);
+        if (!isNaN(amount) && this.selectedType in this.inventory) {
+            db.collection('inventory').doc(this.selectedType).update({ units: amount }).then(() => {
+            this.inventory[this.selectedType] = amount;
+            this.newUnits = '';
+            });
         }
-      };
+        }
+
+      }
     }
   </script>
 </body>
