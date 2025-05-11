@@ -1,131 +1,75 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Blood Donor Registration</title>
-  <!-- Tailwind CSS -->
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Blood Donor</title>
+  <link rel="icon" href="/assets/icon.png" type="image/x-icon" />
+  
   <script src="https://cdn.tailwindcss.com"></script>
-  <!-- Alpine.js -->
   <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
-  <!-- Firebase SDK (Firestore only) -->
   <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-firestore-compat.js"></script>
 </head>
 <body class="bg-gray-100 min-h-screen flex items-center justify-center p-4">
-  <div 
-    x-data="registrationForm()" 
-    class="bg-white rounded-lg shadow-md w-full max-w-md p-6"
-  >
-    <h1 class="text-2xl font-bold text-center text-red-600 mb-6">Become a Blood Donor</h1>
-    
-    <form @submit.prevent="submitForm" class="space-y-4">
-      <!-- First Name -->
-      <div>
-        <label class="block text-gray-700">First Name</label>
-        <input 
-          x-model="firstName" 
-          type="text" 
-          required 
-          class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-red-500"
-        >
-      </div>
+  <div x-data="registerLogin()" class="bg-white rounded-lg shadow-md w-full max-w-md p-6">
 
-      <!-- Surname -->
-      <div>
-        <label class="block text-gray-700">Surname</label>
-        <input 
-          x-model="surname" 
-          type="text" 
-          required 
-          class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-red-500"
-        >
-      </div>
+    <!-- Toggle Buttons -->
+    <div class="flex justify-between mb-4">
+      <button @click="mode = 'register'" :class="mode === 'register' ? 'text-red-600 font-bold' : ''">Register</button>
+      <button @click="mode = 'login'" :class="mode === 'login' ? 'text-red-600 font-bold' : ''">Login</button>
+    </div>
 
-      <!-- Age (16-65) -->
-      <div>
-        <label class="block text-gray-700">Age (16-65)</label>
-        <input 
-          x-model="age" 
-          type="number" 
-          min="16" 
-          max="65" 
-          required 
-          class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-red-500"
-        >
-        <p x-show="ageError" class="text-red-500 text-sm">Age must be between 16 and 65.</p>
-      </div>
+    <!-- Registration Form -->
+    <form x-show="mode === 'register'" @submit.prevent="submitRegister" class="space-y-4">
+      <h1 class="text-2xl font-bold text-center text-red-600">Become a Blood Donor</h1>
 
-      <!-- Email -->
-      <div>
-        <label class="block text-gray-700">Email</label>
-        <input 
-          x-model="email" 
-          type="email" 
-          required 
-          class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-red-500"
-        >
-      </div>
+      <input x-model="firstName" type="text" placeholder="First Name" required class="w-full px-4 py-2 border rounded-lg"/>
+      <input x-model="surname" type="text" placeholder="Surname" required class="w-full px-4 py-2 border rounded-lg"/>
+      <input x-model="age" type="number" placeholder="Age (16-65)" min="16" max="65" required class="w-full px-4 py-2 border rounded-lg"/>
+      <p x-show="ageError" class="text-sm text-red-600">Age must be between 16 and 65.</p>
 
-      <!-- Blood Group Dropdown -->
-      <div>
-        <label class="block text-gray-700">Blood Group</label>
-        <select 
-          x-model="bloodGroup" 
-          required 
-          class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-red-500"
-        >
-          <option value="" disabled selected>Select your blood group</option>
-          <option value="A+">A+</option>
-          <option value="A-">A-</option>
-          <option value="B+">B+</option>
-          <option value="B-">B-</option>
-          <option value="AB+">AB+</option>
-          <option value="AB-">AB-</option>
-          <option value="O+">O+</option>
-          <option value="O-">O-</option>
-        </select>
-      </div>
+      <input x-model="email" type="email" placeholder="Email" required class="w-full px-4 py-2 border rounded-lg"/>
+      <input x-model="password" type="password" placeholder="Password" required class="w-full px-4 py-2 border rounded-lg"/>
 
-      <!-- Location (Auto-detected or Manual) -->
-      <div>
-        <label class="block text-gray-700">Location</label>
-        <div class="flex space-x-2">
-          <input 
-            x-model="location" 
-            type="text" 
-            required 
-            class="flex-1 px-4 py-2 border rounded-lg focus:ring-2 focus:ring-red-500"
-            placeholder="Detecting..."
-          >
-          <button 
-            type="button" 
-            @click="detectLocation" 
-            class="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600"
-          >
-            Detect
-          </button>
-        </div>
-        <p x-show="locationError" class="text-red-500 text-sm">Allow location access or enter manually.</p>
-      </div>
+      <select x-model="bloodGroup" required class="w-full px-4 py-2 border rounded-lg">
+        <option value="" disabled selected>Select your blood group</option>
+        <option>A+</option><option>A-</option><option>B+</option><option>B-</option>
+        <option>AB+</option><option>AB-</option><option>O+</option><option>O-</option>
+      </select>
 
-      <!-- Submit Button -->
-      <button 
-        type="submit" 
-        class="w-full bg-red-600 text-white py-2 rounded-lg hover:bg-red-700 transition"
-        :disabled="isLoading"
-      >
-        <span x-show="!isLoading">Register as Donor</span>
+      <div class="flex space-x-2">
+        <input x-model="location" type="text" placeholder="Enter Manual Location" class="flex-1 px-4 py-2 border rounded-lg"/>
+        <button type="button" @click="detectLocation" class="bg-blue-500 text-white px-3 rounded-lg">Detect</button>
+      </div>
+      <p x-show="locationError" class="text-sm text-red-600">Allow location access or enter manually.</p>
+
+      <button type="submit" class="w-full bg-red-600 text-white py-2 rounded-lg hover:bg-red-700" :disabled="isLoading">
+        <span x-show="!isLoading">Register</span>
         <span x-show="isLoading">Saving...</span>
       </button>
-
-      <!-- Success/Error Message -->
-      <div x-show="message" x-text="message" :class="{'text-green-600': isSuccess, 'text-red-600': !isSuccess}"></div>
     </form>
+
+    <!-- Login Form -->
+    <form x-show="mode === 'login'" @submit.prevent="submitLogin" class="space-y-4">
+      <h1 class="text-2xl font-bold text-center text-red-600">Login</h1>
+
+      <input x-model="email" type="email" placeholder="Email" required class="w-full px-4 py-2 border rounded-lg"/>
+      <input x-model="password" type="password" placeholder="Password" required class="w-full px-4 py-2 border rounded-lg"/>
+
+      <button type="submit" class="w-full bg-red-600 text-white py-2 rounded-lg hover:bg-red-700" :disabled="isLoading">
+        <span x-show="!isLoading">Login</span>
+        <span x-show="isLoading">Logging in...</span>
+      </button>
+    </form>
+
+    <!-- Feedback Message -->
+    <div x-show="message" x-text="message" class="mt-4 text-center" :class="isSuccess ? 'text-green-600' : 'text-red-600'"></div>
   </div>
 
   <script>
-    // Firebase Config (Replace with your actual config)
+    // Firebase Config
     const firebaseConfig = {
       apiKey: "AIzaSyBIMvMk7TVVTZaG54rNEzPBoJt3lte9Cgw",
       authDomain: "samaritanweb-a5575.firebaseapp.com",
@@ -135,17 +79,18 @@
       appId: "1:813580297276:web:d58d6637cfc101ee484f39"
     };
 
-    // Initialize Firebase (Firestore only)
     firebase.initializeApp(firebaseConfig);
+    const auth = firebase.auth();
     const db = firebase.firestore();
 
-    // Alpine.js Registration Form Logic
-    function registrationForm() {
+    function registerLogin() {
       return {
+        mode: 'register',
         firstName: '',
         surname: '',
         age: '',
         email: '',
+        password: '',
         bloodGroup: '',
         location: '',
         isLoading: false,
@@ -154,42 +99,39 @@
         ageError: false,
         locationError: false,
 
-        // Detect user's location
         detectLocation() {
           if (navigator.geolocation) {
             navigator.geolocation.getCurrentPosition(
-              (position) => {
-                // Mock reverse geocoding (replace with Google Maps API in production)
-                this.location = `Lat: ${position.coords.latitude}, Long: ${position.coords.longitude}`;
+              (pos) => {
+                this.location = `Lat: ${pos.coords.latitude}, Long: ${pos.coords.longitude}`;
                 this.locationError = false;
               },
-              (error) => {
+              () => {
                 this.locationError = true;
-                this.message = "Location access denied. Enter manually.";
+                this.message = "Location access denied.";
               }
             );
           } else {
             this.locationError = true;
-            this.message = "Geolocation not supported by your browser.";
+            this.message = "Geolocation not supported.";
           }
         },
 
-        // Validate age (16-65)
         validateAge() {
           this.ageError = this.age < 16 || this.age > 65;
           return !this.ageError;
         },
 
-        // Submit form to Firestore (no authentication)
-        async submitForm() {
+        async submitRegister() {
           if (!this.validateAge()) return;
-
           this.isLoading = true;
           this.message = '';
 
           try {
-            // Save directly to Firestore
-            await db.collection("donors").add({
+            const userCredential = await auth.createUserWithEmailAndPassword(this.email, this.password);
+            const user = userCredential.user;
+
+            await db.collection("donors").doc(user.uid).set({
               firstName: this.firstName,
               surname: this.surname,
               age: Number(this.age),
@@ -200,22 +142,34 @@
             });
 
             this.isSuccess = true;
-            this.message = "Thank you for registering!";
-            // Reset form
-            this.firstName = '';
-            this.surname = '';
-            this.age = '';
-            this.email = '';
-            this.bloodGroup = '';
-            this.location = '';
+            this.message = "Registration successful!";
+            window.location.href = "../donor/donorDashboard.html";
+
           } catch (error) {
             this.isSuccess = false;
-            this.message = `Error: ${error.message}`;
+            this.message = error.message;
+          } finally {
+            this.isLoading = false;
+          }
+        },
+
+        async submitLogin() {
+          this.isLoading = true;
+          this.message = '';
+
+          try {
+            await auth.signInWithEmailAndPassword(this.email, this.password);
+            this.isSuccess = true;
+            this.message = "Login successful!";
+            window.location.href = "../donor/donorDashboard.html";
+          } catch (error) {
+            this.isSuccess = false;
+            this.message = error.message;
           } finally {
             this.isLoading = false;
           }
         }
-      };
+      }
     }
   </script>
 </body>
