@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Blood Donor Registration</title>
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Alpine.js -->
+  <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+  <!-- Firebase SDK (Firestore only) -->
+  <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-firestore-compat.js"></script>
+</head>
+<body class="bg-gray-100 min-h-screen flex items-center justify-center p-4">
+  <div 
+    x-data="registrationForm()" 
+    class="bg-white rounded-lg shadow-md w-full max-w-md p-6"
+  >
+    <h1 class="text-2xl font-bold text-center text-red-600 mb-6">Become a Blood Donor</h1>
+    
+    <form @submit.prevent="submitForm" class="space-y-4">
+      <!-- First Name -->
+      <div>
+        <label class="block text-gray-700">First Name</label>
+        <input 
+          x-model="firstName" 
+          type="text" 
+          required 
+          class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-red-500"
+        >
+      </div>
+
+      <!-- Surname -->
+      <div>
+        <label class="block text-gray-700">Surname</label>
+        <input 
+          x-model="surname" 
+          type="text" 
+          required 
+          class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-red-500"
+        >
+      </div>
+
+      <!-- Age (16-65) -->
+      <div>
+        <label class="block text-gray-700">Age (16-65)</label>
+        <input 
+          x-model="age" 
+          type="number" 
+          min="16" 
+          max="65" 
+          required 
+          class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-red-500"
+        >
+        <p x-show="ageError" class="text-red-500 text-sm">Age must be between 16 and 65.</p>
+      </div>
+
+      <!-- Email -->
+      <div>
+        <label class="block text-gray-700">Email</label>
+        <input 
+          x-model="email" 
+          type="email" 
+          required 
+          class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-red-500"
+        >
+      </div>
+
+      <!-- Blood Group Dropdown -->
+      <div>
+        <label class="block text-gray-700">Blood Group</label>
+        <select 
+          x-model="bloodGroup" 
+          required 
+          class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-red-500"
+        >
+          <option value="" disabled selected>Select your blood group</option>
+          <option value="A+">A+</option>
+          <option value="A-">A-</option>
+          <option value="B+">B+</option>
+          <option value="B-">B-</option>
+          <option value="AB+">AB+</option>
+          <option value="AB-">AB-</option>
+          <option value="O+">O+</option>
+          <option value="O-">O-</option>
+        </select>
+      </div>
+
+      <!-- Location (Auto-detected or Manual) -->
+      <div>
+        <label class="block text-gray-700">Location</label>
+        <div class="flex space-x-2">
+          <input 
+            x-model="location" 
+            type="text" 
+            required 
+            class="flex-1 px-4 py-2 border rounded-lg focus:ring-2 focus:ring-red-500"
+            placeholder="Detecting..."
+          >
+          <button 
+            type="button" 
+            @click="detectLocation" 
+            class="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600"
+          >
+            Detect
+          </button>
+        </div>
+        <p x-show="locationError" class="text-red-500 text-sm">Allow location access or enter manually.</p>
+      </div>
+
+      <!-- Submit Button -->
+      <button 
+        type="submit" 
+        class="w-full bg-red-600 text-white py-2 rounded-lg hover:bg-red-700 transition"
+        :disabled="isLoading"
+      >
+        <span x-show="!isLoading">Register as Donor</span>
+        <span x-show="isLoading">Saving...</span>
+      </button>
+
+      <!-- Success/Error Message -->
+      <div x-show="message" x-text="message" :class="{'text-green-600': isSuccess, 'text-red-600': !isSuccess}"></div>
+    </form>
+  </div>
+
+  <script>
+    // Firebase Config (Replace with your actual config)
+    const firebaseConfig = {
+      apiKey: "AIzaSyBIMvMk7TVVTZaG54rNEzPBoJt3lte9Cgw",
+      authDomain: "samaritanweb-a5575.firebaseapp.com",
+      projectId: "samaritanweb-a5575",
+      storageBucket: "samaritanweb-a5575.appspot.com",
+      messagingSenderId: "813580297276",
+      appId: "1:813580297276:web:d58d6637cfc101ee484f39"
+    };
+
+    // Initialize Firebase (Firestore only)
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
+
+    // Alpine.js Registration Form Logic
+    function registrationForm() {
+      return {
+        firstName: '',
+        surname: '',
+        age: '',
+        email: '',
+        bloodGroup: '',
+        location: '',
+        isLoading: false,
+        message: '',
+        isSuccess: false,
+        ageError: false,
+        locationError: false,
+
+        // Detect user's location
+        detectLocation() {
+          if (navigator.geolocation) {
+            navigator.geolocation.getCurrentPosition(
+              (position) => {
+                // Mock reverse geocoding (replace with Google Maps API in production)
+                this.location = `Lat: ${position.coords.latitude}, Long: ${position.coords.longitude}`;
+                this.locationError = false;
+              },
+              (error) => {
+                this.locationError = true;
+                this.message = "Location access denied. Enter manually.";
+              }
+            );
+          } else {
+            this.locationError = true;
+            this.message = "Geolocation not supported by your browser.";
+          }
+        },
+
+        // Validate age (16-65)
+        validateAge() {
+          this.ageError = this.age < 16 || this.age > 65;
+          return !this.ageError;
+        },
+
+        // Submit form to Firestore (no authentication)
+        async submitForm() {
+          if (!this.validateAge()) return;
+
+          this.isLoading = true;
+          this.message = '';
+
+          try {
+            // Save directly to Firestore
+            await db.collection("donors").add({
+              firstName: this.firstName,
+              surname: this.surname,
+              age: Number(this.age),
+              email: this.email,
+              bloodGroup: this.bloodGroup,
+              location: this.location,
+              createdAt: firebase.firestore.FieldValue.serverTimestamp()
+            });
+
+            this.isSuccess = true;
+            this.message = "Thank you for registering!";
+            // Reset form
+            this.firstName = '';
+            this.surname = '';
+            this.age = '';
+            this.email = '';
+            this.bloodGroup = '';
+            this.location = '';
+          } catch (error) {
+            this.isSuccess = false;
+            this.message = `Error: ${error.message}`;
+          } finally {
+            this.isLoading = false;
+          }
+        }
+      };
+    }
+  </script>
+</body>
+</html>
