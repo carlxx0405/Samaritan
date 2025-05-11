@@ -1,16 +1,237 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" class="bg-gray-50">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Admin Dashboard</title>
-    <link rel="icon" href="../assets/icon.png" type="image/x-icon">
-    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
-    <script src="//unpkg.com/navigo"></script>
-    <script src="https://kit.fontawesome.com/244af82459.js" crossorigin="anonymous"></script>
-    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Admin Dashboard</title>
+  <link rel="icon" href="../assets/icon.png" type="image/x-icon">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+  <script src="https://kit.fontawesome.com/244af82459.js" crossorigin="anonymous"></script>
+
+  <!-- Firebase SDKs -->
+  <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore-compat.js"></script>
+
+  <script>
+    // Firebase config
+    const firebaseConfig = {
+      apiKey: "AIzaSyBIMvMk7TVVTZaG54rNEzPBoJt3lte9Cgw",
+      authDomain: "samaritanweb-a5575.firebaseapp.com",
+      projectId: "samaritanweb-a5575",
+      storageBucket: "samaritanweb-a5575.firebasestorage.app",
+      messagingSenderId: "813580297276",
+      appId: "1:813580297276:web:d58d6637cfc101ee484f39"
+    };
+
+    // Initialize Firebase
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
+  </script>
 </head>
-<body>
-    
+<body x-data="adminDashboard()" x-init="init()">
+  <div class="flex min-h-screen">
+    <!-- Sidebar -->
+    <aside class="w-60 bg-white shadow-md p-4 space-y-6">
+      <div class="text-xl font-bold text-red-600">Samaritan <i class="fas fa-tint"></i></div>
+      <nav class="flex flex-col space-y-3">
+        <button @click="currentTab = 'dashboard'" :class="{'text-red-600': currentTab === 'dashboard'}" class="text-left nav-link flex items-center space-x-2 text-gray-700 hover:text-red-600">
+          <i class="fas fa-home"></i><span>Dashboard</span>
+        </button>
+        <button @click="currentTab = 'requests'" :class="{'text-red-600': currentTab === 'requests'}" class="text-left nav-link flex items-center space-x-2 text-gray-700 hover:text-red-600">
+          <i class="fas fa-tint"></i><span>Blood Requests</span>
+        </button>
+        <button @click="currentTab = 'inventory'" :class="{'text-red-600': currentTab === 'inventory'}" class="text-left nav-link flex items-center space-x-2 text-gray-700 hover:text-red-600">
+          <i class="fas fa-warehouse"></i><span>Inventory</span>
+        </button>
+      </nav>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="flex-1 p-6">
+      <!-- Dashboard Tab -->
+      <div x-show="currentTab === 'dashboard'" class="space-y-6">
+        <h2 class="text-2xl font-bold text-gray-800">Admin Dashboard</h2>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div class="bg-white p-4 rounded-lg shadow">
+            <h3 class="text-gray-500">Pending Requests</h3>
+            <p class="text-3xl font-bold" x-text="stats.pendingRequests"></p>
+          </div>
+          <div class="bg-white p-4 rounded-lg shadow">
+            <h3 class="text-gray-500">Available Donors</h3>
+            <p class="text-3xl font-bold" x-text="stats.availableDonors"></p>
+          </div>
+          <div class="bg-white p-4 rounded-lg shadow">
+            <h3 class="text-gray-500">Total Blood Units</h3>
+            <p class="text-3xl font-bold" x-text="stats.totalUnits"></p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Requests Tab -->
+      <div x-show="currentTab === 'requests'" class="space-y-6">
+        <h2 class="text-2xl font-bold text-gray-800">Blood Requests</h2>
+        <div class="bg-white rounded-lg shadow overflow-x-auto">
+          <table class="min-w-full">
+            <thead class="bg-gray-100">
+              <tr>
+                <th class="px-4 py-2 text-left">Request ID</th>
+                <th class="px-4 py-2 text-left">Blood Type</th>
+                <th class="px-4 py-2 text-left">Units</th>
+                <th class="px-4 py-2 text-left">Status</th>
+                <th class="px-4 py-2 text-left">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              <template x-for="request in bloodRequests" :key="request.id">
+                <tr class="border-t hover:bg-gray-50">
+                  <td class="px-4 py-2" x-text="request.id"></td>
+                  <td class="px-4 py-2" x-text="request.bloodType"></td>
+                  <td class="px-4 py-2" x-text="request.units"></td>
+                  <td class="px-4 py-2">
+                    <span x-text="request.status"
+                          :class="{
+                            'bg-yellow-100 text-yellow-800': request.status === 'pending',
+                            'bg-green-100 text-green-800': request.status === 'approved',
+                            'bg-red-100 text-red-800': request.status === 'rejected'
+                          }"
+                          class="px-2 py-1 rounded-full text-xs">
+                    </span>
+                  </td>
+                  <td class="px-4 py-2">
+                    <button @click="approveRequest(request.id)"
+                            class="bg-green-500 text-white px-3 py-1 rounded hover:bg-green-600"
+                            x-show="request.status === 'pending'">
+                      Approve
+                    </button>
+                    <button @click="rejectRequest(request.id)"
+                            class="bg-red-500 text-white px-3 py-1 rounded hover:bg-red-600 ml-2"
+                            x-show="request.status === 'pending'">
+                      Reject
+                    </button>
+                  </td>
+                </tr>
+              </template>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Inventory Tab -->
+      <!-- Inventory Tab -->
+        <div x-show="currentTab === 'inventory'" class="space-y-6">
+            <h2 class="text-2xl font-bold text-gray-800">Blood Inventory</h2>
+        
+            <div class="bg-white p-6 rounded-lg shadow max-w-md space-y-4">
+            <div>
+                <label class="block mb-1 font-semibold">Select Blood Type</label>
+                <select x-model="selectedType" class="border px-3 py-2 w-full rounded">
+                <template x-for="type in Object.keys(inventory)" :key="type">
+                    <option x-text="type" :value="type"></option>
+                </template>
+                </select>
+            </div>
+        
+            <div>
+                <label class="block mb-1 font-semibold">Current Units: <span x-text="inventory[selectedType]"></span></label>
+                <input min="0" type="number" x-model="newUnits" placeholder="Enter new unit value" class="border px-3 py-2 w-full rounded" />
+            </div>
+        
+            <button @click="updateInventory()" class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">
+                Update Units
+            </button>
+            </div>
+        </div>
+  
+      </div>
+    </main>
+  </div>
+
+  <!-- Alpine Data -->
+  <script>
+    function adminDashboard() {
+      return {
+        currentTab: 'dashboard',
+        stats: {
+          pendingRequests: 0,
+          availableDonors: 0,
+          totalUnits: 0
+        },
+        bloodRequests: [],
+        inventory: {
+        'A+': 0,
+        'A-': 0,
+        'B+': 0,
+        'B-': 0,
+        'AB+': 0,
+        'AB-': 0,
+        'O+': 0,
+        'O-': 0
+        },
+        selectedType: 'A+',
+        newUnits: '',
+
+
+        init() {
+          this.fetchStats();
+          this.loadRequests();
+          this.loadInventory();
+        },
+
+        fetchStats() {
+          db.collection('requests').where("status", "==", "pending").get().then(snap => {
+            this.stats.pendingRequests = snap.size;
+          });
+
+          db.collection('donors').get().then(snap => {
+            this.stats.availableDonors = snap.size;
+          });
+
+          db.collection('inventory').get().then(snap => {
+            let total = 0;
+            snap.forEach(doc => total += doc.data().units || 0);
+            this.stats.totalUnits = total;
+          });
+        },
+
+        loadRequests() {
+          db.collection('requests').onSnapshot(snapshot => {
+            this.bloodRequests = [];
+            snapshot.forEach(doc => {
+              this.bloodRequests.push({ id: doc.id, ...doc.data() });
+            });
+          });
+        },
+
+        approveRequest(id) {
+          db.collection('requests').doc(id).update({ status: 'approved' });
+        },
+
+        rejectRequest(id) {
+          db.collection('requests').doc(id).update({ status: 'rejected' });
+        },
+
+        loadInventory() {
+        db.collection('inventory').get().then(snapshot => {
+            snapshot.forEach(doc => {
+            this.inventory[doc.id] = doc.data().units;
+            });
+        });
+        },
+
+
+        updateInventory() {
+        const amount = parseInt(this.newUnits);
+        if (!isNaN(amount) && this.selectedType in this.inventory) {
+            db.collection('inventory').doc(this.selectedType).update({ units: amount }).then(() => {
+            this.inventory[this.selectedType] = amount;
+            this.newUnits = '';
+            });
+        }
+        }
+
+      }
+    }
+  </script>
 </body>
 </html>
