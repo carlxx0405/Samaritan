@@ -37,6 +37,34 @@
     </main>
   </div>
 
+<script type="module">
+    // Import the functions you need from the SDKs you need
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.7.1/firebase-app.js";
+    // TODO: Add SDKs for Firebase products that you want to use
+    // https://firebase.google.com/docs/web/setup#available-libraries
+  
+    // Your web app's Firebase configuration
+    const firebaseConfig = {
+      apiKey: "AIzaSyBIMvMk7TVVTZaG54rNEzPBoJt3lte9Cgw",
+      authDomain: "samaritanweb-a5575.firebaseapp.com",
+      projectId: "samaritanweb-a5575",
+      storageBucket: "samaritanweb-a5575.firebasestorage.app",
+      messagingSenderId: "813580297276",
+      appId: "1:813580297276:web:d58d6637cfc101ee484f39"
+    };
+  
+    // Initialize Firebase
+    const app = initializeApp(firebaseConfig);
+    import {
+    getFirestore,
+    collection,
+    addDoc,
+    getDocs,
+    onSnapshot
+    } from "https://www.gstatic.com/firebasejs/11.7.1/firebase-firestore.js";
+    import { getDatabase, ref, push, onValue, set } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-database.js";
+  </script>
+
   <script src="hospitalDashboard.js" defer></script>
 </body>
 </html>
