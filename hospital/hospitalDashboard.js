@@ -68,6 +68,15 @@ const availabilityView = () => `
   </div>
 `;
 
+const renderWithAuth = (viewFn) => {
+  const email = localStorage.getItem("hospitalEmail");
+  if (!email) {
+    window.location.href = "../hospital/hospitalRegister.html";
+    return;
+  }
+  render(viewFn());
+};
+
 // View Loader
 const render = (html) => {
   main.innerHTML = html;
@@ -77,7 +86,11 @@ const render = (html) => {
 router.on({
   '/': () => render(dashboardView()),
   '/requests': () => render(requestView()),
-  '/availability': () => render(availabilityView())
+  '/availability': () => render(availabilityView()),
+  '/logout': () => {
+    localStorage.removeItem("hospitalEmail");
+    window.location.href = "../Index.html";
+  }
 }).resolve();
 
 window.addEventListener('DOMContentLoaded', () => {
