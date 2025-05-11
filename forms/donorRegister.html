@@ -78,11 +78,11 @@
       messagingSenderId: "813580297276",
       appId: "1:813580297276:web:d58d6637cfc101ee484f39"
     };
-
+  
     firebase.initializeApp(firebaseConfig);
     const auth = firebase.auth();
     const db = firebase.firestore();
-
+  
     function registerLogin() {
       return {
         mode: 'register',
@@ -98,7 +98,7 @@
         isSuccess: false,
         ageError: false,
         locationError: false,
-
+  
         detectLocation() {
           if (navigator.geolocation) {
             navigator.geolocation.getCurrentPosition(
@@ -116,21 +116,21 @@
             this.message = "Geolocation not supported.";
           }
         },
-
+  
         validateAge() {
           this.ageError = this.age < 16 || this.age > 65;
           return !this.ageError;
         },
-
+  
         async submitRegister() {
           if (!this.validateAge()) return;
           this.isLoading = true;
           this.message = '';
-
+  
           try {
             const userCredential = await auth.createUserWithEmailAndPassword(this.email, this.password);
             const user = userCredential.user;
-
+  
             await db.collection("donors").doc(user.uid).set({
               firstName: this.firstName,
               surname: this.surname,
@@ -138,13 +138,14 @@
               email: this.email,
               bloodGroup: this.bloodGroup,
               location: this.location,
+              role: 'user', // default role
               createdAt: firebase.firestore.FieldValue.serverTimestamp()
             });
-
+  
             this.isSuccess = true;
             this.message = "Registration successful!";
-            window.location.href = "../donor/donorDashboard.html";
-
+            window.location.href = "donor-dashboard.html";
+  
           } catch (error) {
             this.isSuccess = false;
             this.message = error.message;
@@ -152,16 +153,31 @@
             this.isLoading = false;
           }
         },
-
+  
         async submitLogin() {
           this.isLoading = true;
           this.message = '';
-
+  
           try {
-            await auth.signInWithEmailAndPassword(this.email, this.password);
-            this.isSuccess = true;
-            this.message = "Login successful!";
-            window.location.href = "../donor/donorDashboard.html";
+            const userCredential = await auth.signInWithEmailAndPassword(this.email, this.password);
+            const user = userCredential.user;
+  
+            const userDoc = await db.collection("donors").doc(user.uid).get();
+            if (userDoc.exists) {
+              const role = userDoc.data().role || 'user';
+  
+              this.isSuccess = true;
+              this.message = "Login successful! Redirecting...";
+  
+              if (role === 'admin') {
+                window.location.href = "../admin/adminDashboard.html";
+              } else {
+                window.location.href = "../donor/donorDashboard.html";
+              }
+            } else {
+              this.message = "No user data found.";
+              this.isSuccess = false;
+            }
           } catch (error) {
             this.isSuccess = false;
             this.message = error.message;
@@ -171,6 +187,6 @@
         }
       }
     }
-  </script>
+  </script>  
 </body>
 </html>
