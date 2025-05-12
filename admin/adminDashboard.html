@@ -1,308 +1,35 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" class="bg-gray-50">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Admin Dashboard</title>
-    <link rel="icon" href="../assets/icon.png" type="image/x-icon">
-    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
-    <script src="//unpkg.com/navigo"></script>
-    <script src="https://kit.fontawesome.com/244af82459.js" crossorigin="anonymous"></script>
-    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
-</head>
-<body>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Admin Dashboard</title>
+  <link rel="icon" href="../assets/icon.png" type="image/x-icon">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+  <script src="https://kit.fontawesome.com/244af82459.js" crossorigin="anonymous"></script>
 
-<body class="bg-gray-50" x-data="adminDashboard()">
-  <div class="flex min-h-screen">
-    <!-- Sidebar -->
-    <aside class="w-60 bg-white shadow-md p-4 space-y-6">
-      <div class="text-xl font-bold text-red-600">Samaritan <i class="fas fa-tint"></i></div>
-      <nav class="flex flex-col space-y-3">
-        <button @click="currentTab = 'dashboard'" class="text-left nav-link text-gray-700 hover:text-red-600 flex items-center space-x-2" :class="{'text-red-600': currentTab === 'dashboard'}">
-          <i class="fas fa-home"></i><span>Dashboard</span>
-        </button>
-        <button @click="currentTab = 'requests'" class="text-left nav-link text-gray-700 hover:text-red-600 flex items-center space-x-2" :class="{'text-red-600': currentTab === 'requests'}">
-          <i class="fas fa-tint"></i><span>Blood Requests</span>
-        </button>
-        <button @click="currentTab = 'inventory'" class="text-left nav-link text-gray-700 hover:text-red-600 flex items-center space-x-2" :class="{'text-red-600': currentTab === 'inventory'}">
-          <i class="fas fa-warehouse"></i><span>Inventory</span>
-        </button>
-        <button @click="currentTab = 'reports'" class="text-left nav-link text-gray-700 hover:text-red-600 flex items-center space-x-2" :class="{'text-red-600': currentTab === 'reports'}">
-          <i class="fas fa-chart-bar"></i><span>Reports</span>
-        </button>
-      </nav>
-    </aside>
-
-    <!-- Main Content -->
-    <main class="flex-1 p-6">
-      <!-- Dashboard Tab -->
-      <div x-show="currentTab === 'dashboard'" class="space-y-6">
-        <h2 class="text-2xl font-bold text-gray-800">Admin Dashboard</h2>
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <div class="bg-white p-4 rounded-lg shadow">
-            <h3 class="text-gray-500">Pending Requests</h3>
-            <p class="text-3xl font-bold" x-text="stats.pendingRequests"></p>
-          </div>
-          <div class="bg-white p-4 rounded-lg shadow">
-            <h3 class="text-gray-500">Available Donors</h3>
-            <p class="text-3xl font-bold" x-text="stats.availableDonors"></p>
-          </div>
-          <div class="bg-white p-4 rounded-lg shadow">
-            <h3 class="text-gray-500">Critical Stock</h3>
-            <p class="text-3xl font-bold" x-text="stats.criticalStock"></p>
-          </div>
-        </div>
-      </div>
-
-      <!-- Blood Requests Tab -->
-      <div x-show="currentTab === 'requests'" class="space-y-6">
-        <h2 class="text-2xl font-bold text-gray-800">Blood Requests</h2>
-        <div class="bg-white rounded-lg shadow overflow-x-auto">
-          <table class="min-w-full">
-            <thead class="bg-gray-100">
-              <tr>
-                <th class="px-4 py-2 text-left">Request ID</th>
-                <th class="px-4 py-2 text-left">Blood Type</th>
-                <th class="px-4 py-2 text-left">Units</th>
-                <th class="px-4 py-2 text-left">Status</th>
-                <th class="px-4 py-2 text-left">Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              <template x-for="request in bloodRequests" :key="request.id">
-                <tr class="border-t hover:bg-gray-50">
-                  <td class="px-4 py-2" x-text="request.id"></td>
-                  <td class="px-4 py-2" x-text="request.bloodType"></td>
-                  <td class="px-4 py-2" x-text="request.units"></td>
-                  <td class="px-4 py-2">
-                    <span x-text="request.status" 
-                      :class="{
-                        'bg-yellow-100 text-yellow-800': request.status === 'Pending',
-                        'bg-green-100 text-green-800': request.status === 'Approved',
-                        'bg-red-100 text-red-800': request.status === 'Rejected'
-                      }" 
-                      class="px-2 py-1 rounded-full text-xs">
-                    </span>
-                  </td>
-                  <td class="px-4 py-2">
-                    <button @click="approveRequest(request.id)" 
-                            class="bg-green-500 text-white px-3 py-1 rounded hover:bg-green-600"
-                            x-show="request.status === 'Pending'">
-                      Approve
-                    </button>
-                    <button @click="rejectRequest(request.id)" 
-                            class="bg-red-500 text-white px-3 py-1 rounded hover:bg-red-600 ml-2"
-                            x-show="request.status === 'Pending'">
-                      Reject
-                    </button>
-                  </td>
-                </tr>
-              </template>
-            </tbody>
-          </table>
-        </div>
-      </div>
-
-      <!-- Inventory Tab -->
-      <div x-show="currentTab === 'inventory'" class="space-y-6">
-        <h2 class="text-2xl font-bold text-gray-800">Blood Inventory</h2>
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div class="bg-white p-6 rounded-lg shadow">
-            <h3 class="text-lg font-semibold mb-4">Current Stock Levels</h3>
-            <div class="space-y-4">
-              <template x-for="(stock, bloodType) in inventory" :key="bloodType">
-                <div>
-                  <div class="flex justify-between mb-1">
-                    <span class="font-medium" x-text="bloodType"></span>
-                    <span x-text="stock + ' units'" 
-                          :class="{
-                            'text-red-600': stock < 5,
-                            'text-yellow-600': stock >= 5 && stock < 10,
-                            'text-green-600': stock >= 10
-                          }"></span>
-                  </div>
-                  <div class="w-full bg-gray-200 rounded-full h-2.5">
-                    <div :class="{
-                          'bg-red-600': stock < 5,
-                          'bg-yellow-600': stock >= 5 && stock < 10,
-                          'bg-green-600': stock >= 10
-                        }" 
-                        :style="'width: ' + (stock * 10) + '%'" 
-                        class="h-2.5 rounded-full"></div>
-                  </div>
-                </div>
-              </template>
-            </div>
-          </div>
-
-          <div class="bg-white p-6 rounded-lg shadow">
-            <h3 class="text-lg font-semibold mb-4">Update Inventory</h3>
-            <form @submit.prevent="updateInventory" class="space-y-4">
-              <div>
-                <label class="block text-gray-700 mb-2">Blood Type</label>
-                <select x-model="inventoryUpdate.bloodType" class="w-full px-4 py-2 border rounded-lg">
-                  <option value="" disabled selected>Select blood type</option>
-                  <option value="A+">A+</option>
-                  <option value="A-">A-</option>
-                  <option value="B+">B+</option>
-                  <option value="B-">B-</option>
-                  <option value="AB+">AB+</option>
-                  <option value="AB-">AB-</option>
-                  <option value="O+">O+</option>
-                  <option value="O-">O-</option>
-                </select>
-              </div>
-              <div>
-                <label class="block text-gray-700 mb-2">Units</label>
-                <input x-model.number="inventoryUpdate.units" type="number" min="0" class="w-full px-4 py-2 border rounded-lg">
-              </div>
-              <button type="submit" class="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600">
-                Update Stock
-              </button>
-            </form>
-          </div>
-        </div>
-      </div>
-
-      <!-- Reports Tab -->
-      <div x-show="currentTab === 'reports'" class="space-y-6">
-        <h2 class="text-2xl font-bold text-gray-800">Reports</h2>
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div class="bg-white p-6 rounded-lg shadow">
-            <h3 class="text-lg font-semibold mb-4">Monthly Donations</h3>
-            <div class="h-64 bg-gray-100 flex items-center justify-center rounded-lg">
-              <p class="text-gray-500">Monthly donations chart will appear here</p>
-            </div>
-          </div>
-          <div class="bg-white p-6 rounded-lg shadow">
-            <h3 class="text-lg font-semibold mb-4">Request Status</h3>
-            <div class="h-64 bg-gray-100 flex items-center justify-center rounded-lg">
-              <p class="text-gray-500">Request status chart will appear here</p>
-            </div>
-          </div>
-        </div>
-      </div>
-    </main>
-  </div>
+  <!-- Firebase SDKs -->
+  <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore-compat.js"></script>
 
   <script>
-  // Firebase Configuration
-  const firebaseConfig = {
-    apiKey: "AIzaSyBIMvMk7TVVTZaG54rNEzPBoJt3lte9Cgw",
-    authDomain: "samaritanweb-a5575.firebaseapp.com",
-    projectId: "samaritanweb-a5575",
-    storageBucket: "samaritanweb-a5575.firebasestorage.app",
-    messagingSenderId: "813580297276",
-    appId: "1:813580297276:web:d58d6637cfc101ee484f39"
-  };
-
-  // Initialize Firebase
-  firebase.initializeApp(firebaseConfig);
-  const db = firebase.firestore();
-
-  function adminDashboard() {
-    return {
-      currentTab: 'dashboard',
-      stats: {
-        pendingRequests: 0,
-        availableDonors: 0,
-        criticalStock: 0
-      },
-      bloodRequests: [],
-      inventory: {},
-      inventoryUpdate: {
-        bloodType: '',
-        units: 0
-      },
-
-      // Fetch initial data from Firestore
-      async fetchData() {
-        try {
-          // Fetch stats
-          const statsDoc = await db.collection('stats').doc('dashboard').get();
-          if (statsDoc.exists) {
-            this.stats = statsDoc.data();
-          }
-
-          // Fetch blood requests
-          const requestsSnapshot = await db.collection('bloodRequests').get();
-          this.bloodRequests = requestsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-
-          // Fetch inventory
-          const inventoryDoc = await db.collection('inventory').doc('stock').get();
-          if (inventoryDoc.exists) {
-            this.inventory = inventoryDoc.data();
-          }
-
-          // Update critical stock count
-          this.updateCriticalStockCount();
-        } catch (error) {
-          console.error('Error fetching data:', error);
-        }
-      },
-
-      // Approve blood request
-      async approveRequest(requestId) {
-        try {
-          const request = this.bloodRequests.find(req => req.id === requestId);
-          if (request) {
-            request.status = 'Approved';
-            await db.collection('bloodRequests').doc(requestId).update({ status: 'Approved' });
-            alert(`Request ${requestId} approved and donors notified`);
-          }
-        } catch (error) {
-          console.error('Error approving request:', error);
-        }
-      },
-
-      // Reject blood request
-      async rejectRequest(requestId) {
-        try {
-          const request = this.bloodRequests.find(req => req.id === requestId);
-          if (request) {
-            request.status = 'Rejected';
-            await db.collection('bloodRequests').doc(requestId).update({ status: 'Rejected' });
-            alert(`Request ${requestId} rejected`);
-          }
-        } catch (error) {
-          console.error('Error rejecting request:', error);
-        }
-      },
-
-      // Update inventory
-      async updateInventory() {
-        try {
-          if (this.inventoryUpdate.bloodType && this.inventoryUpdate.units >= 0) {
-            this.inventory[this.inventoryUpdate.bloodType] = this.inventoryUpdate.units;
-            await db.collection('inventory').doc('stock').set(this.inventory);
-            this.inventoryUpdate = { bloodType: '', units: 0 };
-            alert('Inventory updated successfully!');
-
-            // Update critical stock count
-            this.updateCriticalStockCount();
-          }
-        } catch (error) {
-          console.error('Error updating inventory:', error);
-        }
-      },
-
-      // Update critical stock count
-      updateCriticalStockCount() {
-        this.stats.criticalStock = Object.values(this.inventory)
-          .filter(units => units < 5)
-          .length;
-      }
+    // Firebase config
+    const firebaseConfig = {
+      apiKey: "AIzaSyBIMvMk7TVVTZaG54rNEzPBoJt3lte9Cgw",
+      authDomain: "samaritanweb-a5575.firebaseapp.com",
+      projectId: "samaritanweb-a5575",
+      storageBucket: "samaritanweb-a5575.firebasestorage.app",
+      messagingSenderId: "813580297276",
+      appId: "1:813580297276:web:d58d6637cfc101ee484f39"
     };
-  }
 
-  // Initialize the dashboard and fetch data
-  document.addEventListener('alpine:init', () => {
-    const dashboard = adminDashboard();
-    dashboard.fetchData();
-    Alpine.data('adminDashboard', () => dashboard);
-  });
-</script>
+    // Initialize Firebase
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
+  </script>
+</head>
+<body>
     
-  
 </body>
 </html>
