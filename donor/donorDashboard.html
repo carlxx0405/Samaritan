@@ -1,11 +1,130 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Document</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Donor Dashboard</title>
+
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <!-- Alpine.js CDN -->
+  <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
+
+  <!-- Navigo Router CDN -->
+  <script src="https://unpkg.com/navigo@8.11.1/lib/navigo.min.js"></script>
 </head>
-<body>
-    
+<body class="bg-gray-50 text-gray-800">
+  <div id="app" class="max-w-3xl mx-auto pt-6"></div>
+
+  <script>
+    function donorDashboard() {
+      return {
+        username: localStorage.getItem("donorName") || "Donor",
+        approvedRequests: [
+          { id: 1, hospitalName: "Hope Clinic", location: "Lagos", urgency: "High" },
+          { id: 2, hospitalName: "LifeCare Hospital", location: "Abuja", urgency: "Medium" },
+        ],
+        pendingResponses: [
+          { id: 101, hospitalName: "Saint Mary's", date: "2025-05-01" }
+        ],
+        init() {
+          // future logic (e.g. Firebase fetch)
+        },
+        goToMap() {
+          router.navigate("/map");
+        },
+        goToDashboard() {
+          router.navigate("/");
+        }
+      };
+    }
+
+    const donorDashboardView = () => `
+      <div x-data="donorDashboard()" x-init="init()" class="p-4 space-y-6">
+
+        <h1 class="text-xl sm:text-2xl font-semibold">Hi, <span x-text="username"></span></h1>
+
+        <div class="bg-white p-4 rounded shadow-md">
+          <h2 class="text-lg font-medium mb-2">What do you want to do?</h2>
+          <button class="bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700 transition">
+            Donate Blood
+          </button>
+        </div>
+
+        <div>
+          <div class="flex justify-between items-center mb-2">
+            <h2 class="text-lg font-semibold">Approved Hospital Requests</h2>
+            <button @click="goToMap()" class="text-blue-600 hover:underline text-sm">
+              See All on Map
+            </button>
+          </div>
+
+          <div class="space-y-4">
+            <template x-for="request in approvedRequests" :key="request.id">
+              <div class="bg-white p-4 rounded shadow-sm border">
+                <h3 class="font-bold text-red-600" x-text="request.hospitalName"></h3>
+                <p class="text-sm text-gray-600" x-text="'Location: ' + request.location"></p>
+                <p class="text-sm text-gray-500" x-text="'Urgency: ' + request.urgency"></p>
+              </div>
+            </template>
+          </div>
+        </div>
+
+        <div>
+          <h2 class="text-lg font-semibold mb-2">Your Pending Responses</h2>
+          <template x-if="pendingResponses.length > 0">
+            <div class="space-y-3">
+              <template x-for="response in pendingResponses" :key="response.id">
+                <div class="bg-white p-4 rounded border shadow-sm">
+                  <h4 class="font-medium text-gray-700" x-text="response.hospitalName"></h4>
+                  <p class="text-sm text-gray-500" x-text="'Request Date: ' + response.date"></p>
+                  <p class="text-sm text-yellow-600">Pending Approval</p>
+                </div>
+              </template>
+            </div>
+          </template>
+          <template x-if="pendingResponses.length === 0">
+            <p class="text-sm text-gray-500 italic">No pending responses at the moment.</p>
+          </template>
+        </div>
+
+      </div>
+    `;
+
+    const donorMapView = () => `
+      <div x-data="donorDashboard()" x-init="init()" class="p-4 space-y-4">
+        <div class="flex justify-between items-center">
+          <h2 class="text-xl font-semibold">Hospital Request Locations</h2>
+          <button @click="goToDashboard()" class="text-blue-600 hover:underline text-sm">
+            Hide Map
+          </button>
+        </div>
+
+        <div class="bg-gray-100 h-60 rounded mt-2 flex items-center justify-center">
+          <p class="text-gray-500">[Map View Placeholder]</p>
+        </div>
+      </div>
+    `;
+
+    const router = new Navigo("/", { hash: true });
+    const app = document.getElementById("app");
+
+    const render = (html) => {
+      app.innerHTML = html;
+      Alpine.initTree(app);
+    };
+
+    router
+      .on({
+        "/": () => render(donorDashboardView()),
+        "/map": () => render(donorMapView())
+      })
+      .resolve();
+
+    window.addEventListener("DOMContentLoaded", () => {
+      router.updatePageLinks();
+    });
+  </script>
 </body>
 </html>

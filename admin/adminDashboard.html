@@ -44,6 +44,10 @@
         <button @click="currentTab = 'inventory'" :class="{'text-red-600': currentTab === 'inventory'}" class="text-left nav-link flex items-center space-x-2 text-gray-700 hover:text-red-600">
           <i class="fas fa-warehouse"></i><span>Inventory</span>
         </button>
+        <button @click="logout()" :class="{'text-red-600': currentTab === 'logout'}" class="text-left nav-link flex items-center space-x-2 text-gray-700 hover:text-red-600">
+          <i class="fas fa-power-off"></i><span>Logout</span>
+        </button>
+        
       </nav>
     </aside>
 
@@ -150,88 +154,92 @@
   <!-- Alpine Data -->
   <script>
     function adminDashboard() {
-      return {
-        currentTab: 'dashboard',
-        stats: {
-          pendingRequests: 0,
-          availableDonors: 0,
-          totalUnits: 0
-        },
-        bloodRequests: [],
-        inventory: {
-        'A+': 0,
-        'A-': 0,
-        'B+': 0,
-        'B-': 0,
-        'AB+': 0,
-        'AB-': 0,
-        'O+': 0,
-        'O-': 0
-        },
-        selectedType: 'A+',
-        newUnits: '',
+  return {
+    currentTab: 'dashboard',
+    stats: {
+      pendingRequests: 0,
+      availableDonors: 0,
+      totalUnits: 0
+    },
+    bloodRequests: [],
+    inventory: {
+      'A+': 0,
+      'A-': 0,
+      'B+': 0,
+      'B-': 0,
+      'AB+': 0,
+      'AB-': 0,
+      'O+': 0,
+      'O-': 0
+    },
+    selectedType: 'A+',
+    newUnits: '',
 
+    init() {
+      this.fetchStats();
+      this.loadRequests();
+      this.loadInventory();
+    },
 
-        init() {
-          this.fetchStats();
-          this.loadRequests();
-          this.loadInventory();
-        },
+    fetchStats() {
+      db.collection('requests').where("status", "==", "pending").get().then(snap => {
+        this.stats.pendingRequests = snap.size;
+      });
 
-        fetchStats() {
-          db.collection('requests').where("status", "==", "pending").get().then(snap => {
-            this.stats.pendingRequests = snap.size;
-          });
+      db.collection('donors').get().then(snap => {
+        this.stats.availableDonors = snap.size;
+      });
 
-          db.collection('donors').get().then(snap => {
-            this.stats.availableDonors = snap.size;
-          });
+      db.collection('inventory').get().then(snap => {
+        let total = 0;
+        snap.forEach(doc => total += doc.data().units || 0);
+        this.stats.totalUnits = total;
+      });
+    },
 
-          db.collection('inventory').get().then(snap => {
-            let total = 0;
-            snap.forEach(doc => total += doc.data().units || 0);
-            this.stats.totalUnits = total;
-          });
-        },
-
-        loadRequests() {
-          db.collection('requests').onSnapshot(snapshot => {
-            this.bloodRequests = [];
-            snapshot.forEach(doc => {
-              this.bloodRequests.push({ id: doc.id, ...doc.data() });
-            });
-          });
-        },
-
-        approveRequest(id) {
-          db.collection('requests').doc(id).update({ status: 'approved' });
-        },
-
-        rejectRequest(id) {
-          db.collection('requests').doc(id).update({ status: 'rejected' });
-        },
-
-        loadInventory() {
-        db.collection('inventory').get().then(snapshot => {
-            snapshot.forEach(doc => {
-            this.inventory[doc.id] = doc.data().units;
-            });
+    loadRequests() {
+      db.collection('requests').onSnapshot(snapshot => {
+        this.bloodRequests = [];
+        snapshot.forEach(doc => {
+          this.bloodRequests.push({ id: doc.id, ...doc.data() });
         });
-        },
+      });
+    },
 
+    approveRequest(id) {
+      db.collection('requests').doc(id).update({ status: 'approved' });
+    },
 
-        updateInventory() {
-        const amount = parseInt(this.newUnits);
-        if (!isNaN(amount) && this.selectedType in this.inventory) {
-            db.collection('inventory').doc(this.selectedType).update({ units: amount }).then(() => {
-            this.inventory[this.selectedType] = amount;
-            this.newUnits = '';
-            });
-        }
-        }
+    rejectRequest(id) {
+      db.collection('requests').doc(id).update({ status: 'rejected' });
+    },
 
+    loadInventory() {
+      db.collection('inventory').get().then(snapshot => {
+        snapshot.forEach(doc => {
+          this.inventory[doc.id] = doc.data().units;
+        });
+      });
+    },
+
+    updateInventory() {
+      const amount = parseInt(this.newUnits);
+      if (!isNaN(amount) && this.selectedType in this.inventory) {
+        db.collection('inventory').doc(this.selectedType).update({ units: amount }).then(() => {
+          this.inventory[this.selectedType] = amount;
+          this.newUnits = '';
+        });
       }
+    },
+
+    logout() {
+  localStorage.removeItem("hospitalEmail");
+  window.location.href = '../Index.html';
     }
+
+  }
+}
+
   </script>
 </body>
 </html>
