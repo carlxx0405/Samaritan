@@ -122,9 +122,16 @@
       })
       .resolve();
 
-    window.addEventListener("DOMContentLoaded", () => {
-      router.updatePageLinks();
-    });
+      window.addEventListener("DOMContentLoaded", () => {
+        const currentHash = window.location.hash;
+        if (!currentHash || currentHash === "#/") {
+            router.navigate("/"); // manually load default route
+        } else {
+            router.resolve();
+        }
+        router.updatePageLinks();
+        });
+
   </script>
 </body>
 </html>
